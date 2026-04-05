@@ -1,0 +1,16 @@
+{
+  "name": "azure-openai-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal Node.js proxy for Azure OpenAI-compatible requests",
+  "license": "MIT",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
