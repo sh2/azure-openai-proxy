@@ -14,7 +14,6 @@ const HOP_BY_HOP_HEADERS = new Set([
   "upgrade",
 ]);
 const SENSITIVE_HEADERS = new Set(["api-key", "authorization", "proxy-authorization"]);
-const DEFAULT_API_VERSION = "2025-04-01-preview";
 const SUPPORTED_REASONING_EFFORTS = new Set([
   "none",
   "minimal",
@@ -101,10 +100,6 @@ function mergeSearchParams(baseSearchParams, requestSearchParams) {
     for (const value of requestSearchParams.getAll(key)) {
       mergedSearchParams.append(key, value);
     }
-  }
-
-  if (!mergedSearchParams.has("api-version")) {
-    mergedSearchParams.set("api-version", DEFAULT_API_VERSION);
   }
 
   return mergedSearchParams.toString();

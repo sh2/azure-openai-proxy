@@ -1,22 +1,26 @@
 # azure-openai-proxy
 
-A small MIT-licensed Node.js proxy for Azure OpenAI applications that are not yet aligned with GPT-5-family Chat Completions request requirements.
+A small MIT-licensed Node.js proxy for Azure OpenAI clients that need lightweight compatibility handling for GPT-5-family Chat Completions requests.
 
-This proxy sits between your application and Azure OpenAI, forwards requests to your Azure endpoint, and rewrites **Chat Completions** request bodies when needed:
+This proxy sits between your application and Azure OpenAI, forwards requests to your configured Azure endpoint, preserves the incoming request path, and rewrites **Chat Completions** request bodies when needed:
 
 - injects `reasoning_effort` when missing
 - injects `verbosity` when missing
 - removes deprecated parameters such as `temperature` and `top_p`
 
-It is intended as a compact compatibility layer, not a full API gateway.
+It can be used in front of either Azure deployment-style paths or `/openai/v1`-style paths. It is intended as a compact compatibility layer, not a full API gateway.
 
 ## What it does
 
 - Forwards requests to `AZURE_OPENAI_ENDPOINT`
 - Preserves the incoming HTTP method, path, and query parameters
-- Adds `api-version=2025-04-01-preview` when the request does not provide `api-version`
 - Rewrites request bodies **only** for Chat Completions API paths
 - Leaves other request bodies unchanged
+
+Because the proxy preserves the incoming path, it can sit in front of either of these client styles:
+
+- Azure deployment-style paths such as `/openai/deployments/<deployment-name>/chat/completions?api-version=...`
+- Azure OpenAI v1-style paths such as `/openai/v1/chat/completions`
 
 ## Chat Completions rewrite rules
 
@@ -46,6 +50,7 @@ You can override these defaults with environment variables.
 - `AZURE_OPENAI_ENDPOINT`
   - Example: `https://<resource-name>.openai.azure.com`
   - Must use `http://` or `https://`
+  - Usually set this to the Azure OpenAI resource origin, not a full request path
 
 ### Optional
 
@@ -76,6 +81,8 @@ AZURE_OPENAI_ENDPOINT="https://<resource-name>.openai.azure.com" ./start-sample.
 
 ## Example
 
+### Azure deployment-style request
+
 Send a legacy-style Chat Completions request to the proxy:
 
 ```bash
@@ -102,6 +109,26 @@ Before forwarding upstream, the proxy rewrites the body to the equivalent of:
   "verbosity": "medium"
 }
 ```
+
+### Azure OpenAI v1-style request
+
+If your client uses the v1 path shape, send requests like this instead:
+
+```bash
+curl -X POST "http://localhost:18080/openai/v1/chat/completions" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "model": "gpt-5.4",
+    "messages": [
+      {"role": "user", "content": "Summarize this document."}
+    ],
+    "temperature": 0.7,
+    "top_p": 0.95
+  }'
+```
+
+The same Chat Completions rewrite rules are applied before forwarding upstream.
 
 ## Limitations
 
