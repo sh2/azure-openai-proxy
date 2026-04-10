@@ -2,7 +2,7 @@
 
 A small MIT-licensed Node.js proxy for Azure OpenAI clients that need lightweight compatibility handling for GPT-5-family Chat Completions requests.
 
-This proxy sits between your application and Azure OpenAI, forwards requests to your configured Azure endpoint, preserves the incoming request path, and rewrites **Chat Completions** request bodies when needed:
+This proxy sits between your application and Azure OpenAI, forwards requests to your configured Azure OpenAI resource origin, preserves the incoming request path, and rewrites **Chat Completions** request bodies when needed:
 
 - injects `reasoning_effort` when missing
 - injects `verbosity` when missing
@@ -12,7 +12,7 @@ It can be used in front of either Azure deployment-style paths or `/openai/v1`-s
 
 ## What it does
 
-- Forwards requests to `AZURE_OPENAI_ENDPOINT`
+- Forwards requests to the Azure OpenAI resource origin configured in `AZURE_OPENAI_ORIGIN`
 - Preserves the incoming HTTP method, path, and query parameters
 - Rewrites request bodies **only** for Chat Completions API paths
 - Leaves other request bodies unchanged
@@ -47,10 +47,11 @@ You can override these defaults with environment variables.
 
 ### Required
 
-- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_ORIGIN`
   - Example: `https://<resource-name>.openai.azure.com`
   - Must use `http://` or `https://`
-  - Usually set this to the Azure OpenAI resource origin, not a full request path
+  - Set this to the Azure OpenAI resource origin only
+  - Do not include `/openai/v1`, `/openai/deployments/...`, or any other request path
 
 ### Optional
 
@@ -68,7 +69,7 @@ You can override these defaults with environment variables.
 ## Quick start
 
 ```bash
-export AZURE_OPENAI_ENDPOINT="https://<resource-name>.openai.azure.com"
+export AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com"
 npm start
 ```
 
@@ -76,7 +77,7 @@ Or use the sample script:
 
 ```bash
 chmod +x start-sample.sh
-AZURE_OPENAI_ENDPOINT="https://<resource-name>.openai.azure.com" ./start-sample.sh
+AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com" ./start-sample.sh
 ```
 
 ## Example

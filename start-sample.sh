@@ -7,14 +7,14 @@ cd "$SCRIPT_DIR"
 : "${PORT:=18080}"
 : "${AZURE_OPENAI_REASONING_EFFORT:=medium}"
 : "${AZURE_OPENAI_VERBOSITY:=medium}"
-: "${AZURE_OPENAI_ENDPOINT:=https://your-resource.openai.azure.com}"
+: "${AZURE_OPENAI_ORIGIN:=https://your-resource.openai.azure.com}"
 
-if [[ "$AZURE_OPENAI_ENDPOINT" == "https://your-resource.openai.azure.com" ]]; then
+if [[ "$AZURE_OPENAI_ORIGIN" == "https://your-resource.openai.azure.com" ]]; then
   cat <<'EOF'
-Set AZURE_OPENAI_ENDPOINT before running this script.
+Set AZURE_OPENAI_ORIGIN before running this script.
 
 Example:
-  AZURE_OPENAI_ENDPOINT="https://<resource-name>.openai.azure.com" ./start-sample.sh
+  AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com" ./start-sample.sh
 EOF
   exit 1
 fi

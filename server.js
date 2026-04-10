@@ -33,26 +33,26 @@ function resolveSupportedValue(value, supportedValues, fallbackValue) {
   return supportedValues.has(value) ? value : fallbackValue;
 }
 
-function parseBaseUrl(configuredBaseUrl) {
-  if (!configuredBaseUrl) {
-    exitWithConfigurationError("Missing upstream endpoint. Set AZURE_OPENAI_ENDPOINT.");
+function parseOriginUrl(configuredOrigin) {
+  if (!configuredOrigin) {
+    exitWithConfigurationError("Missing upstream origin. Set AZURE_OPENAI_ORIGIN.");
   }
 
-  let baseUrl;
+  let originUrl;
 
   try {
-    baseUrl = new URL(configuredBaseUrl);
+    originUrl = new URL(configuredOrigin);
   } catch (error) {
-    exitWithConfigurationError(`Invalid upstream endpoint: ${configuredBaseUrl}`);
+    exitWithConfigurationError(`Invalid upstream origin: ${configuredOrigin}`);
   }
 
-  if (!["http:", "https:"].includes(baseUrl.protocol)) {
+  if (!["http:", "https:"].includes(originUrl.protocol)) {
     exitWithConfigurationError(
-      `Unsupported upstream protocol "${baseUrl.protocol}". Use http:// or https://.`
+      `Unsupported upstream protocol "${originUrl.protocol}". Use http:// or https://.`
     );
   }
 
-  return baseUrl;
+  return originUrl;
 }
 
 function loadConfig() {
@@ -68,11 +68,11 @@ function loadConfig() {
       SUPPORTED_VERBOSITY_LEVELS,
       "medium"
     ),
-    baseUrl: parseBaseUrl(process.env.AZURE_OPENAI_ENDPOINT),
+    originUrl: parseOriginUrl(process.env.AZURE_OPENAI_ORIGIN),
   };
 }
 
-const { port, configuredReasoningEffort, configuredVerbosity, baseUrl } = loadConfig();
+const { port, configuredReasoningEffort, configuredVerbosity, originUrl } = loadConfig();
 
 // URL helpers
 
@@ -105,11 +105,11 @@ function mergeSearchParams(baseSearchParams, requestSearchParams) {
   return mergedSearchParams.toString();
 }
 
-function buildTargetUrl(baseUrl, incomingUrl) {
-  const targetUrl = new URL(baseUrl.href);
+function buildTargetUrl(originUrl, incomingUrl) {
+  const targetUrl = new URL(originUrl.href);
 
-  targetUrl.pathname = mergePathnames(baseUrl.pathname, incomingUrl.pathname);
-  targetUrl.search = mergeSearchParams(baseUrl.searchParams, incomingUrl.searchParams);
+  targetUrl.pathname = mergePathnames(originUrl.pathname, incomingUrl.pathname);
+  targetUrl.search = mergeSearchParams(originUrl.searchParams, incomingUrl.searchParams);
 
   return targetUrl;
 }
@@ -384,7 +384,7 @@ function createUpstreamRequest({
 
   upstreamRequest.on("error", (error) => {
     console.error(`Upstream request failed: ${error.message}`);
-    writeProxyError(response, "Failed to reach upstream Azure OpenAI endpoint.");
+    writeProxyError(response, "Failed to reach upstream Azure OpenAI origin.");
   });
 
   return upstreamRequest;
@@ -392,7 +392,7 @@ function createUpstreamRequest({
 
 function handleProxyRequest(request, response) {
   const incomingUrl = new URL(request.url, "http://localhost");
-  const targetUrl = buildTargetUrl(baseUrl, incomingUrl);
+  const targetUrl = buildTargetUrl(originUrl, incomingUrl);
   const client = selectUpstreamClient(targetUrl);
   let upstreamResponse;
   let upstreamRequest;
@@ -469,7 +469,7 @@ const server = http.createServer(handleProxyRequest);
 
 server.listen(port, () => {
   console.log(`Azure OpenAI proxy listening on http://localhost:${port}`);
-  console.log(`Forwarding requests to ${baseUrl.origin}${baseUrl.pathname}`);
+  console.log(`Forwarding requests to ${originUrl.origin}${originUrl.pathname}`);
   console.log(`Configured reasoning effort: ${configuredReasoningEffort}`);
   console.log(`Configured verbosity: ${configuredVerbosity}`);
   console.log("Request parameter rewriting is applied only to Chat Completions API requests.");
