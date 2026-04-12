@@ -1,5 +1,7 @@
 # azure-openai-proxy
 
+## Overview
+
 A small MIT-licensed Node.js proxy for Azure OpenAI clients that need lightweight compatibility handling for GPT-5-family Chat Completions requests.
 
 This proxy sits between your application and Azure OpenAI, forwards requests to your configured Azure OpenAI resource origin, preserves the incoming request path, and rewrites **Chat Completions** request bodies when needed:
@@ -9,6 +11,27 @@ This proxy sits between your application and Azure OpenAI, forwards requests to 
 - removes deprecated parameters such as `temperature` and `top_p`
 
 It can be used in front of either Azure deployment-style paths or `/openai/v1`-style paths. It is intended as a compact compatibility layer, not a full API gateway.
+
+## Quick start
+
+Prerequisites:
+
+- Node.js `>=18.0.0`
+- No external runtime dependencies
+
+Start the proxy with the minimum required configuration:
+
+```bash
+export AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com"
+npm start
+```
+
+Or use the sample script:
+
+```bash
+chmod +x start-sample.sh
+AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com" ./start-sample.sh
+```
 
 ## What it does
 
@@ -21,27 +44,6 @@ Because the proxy preserves the incoming path, it can sit in front of either of 
 
 - Azure deployment-style paths such as `/openai/deployments/<deployment-name>/chat/completions?api-version=...`
 - Azure OpenAI v1-style paths such as `/openai/v1/chat/completions`
-
-## Chat Completions rewrite rules
-
-For JSON requests to paths matching `/chat/completions`, the proxy:
-
-- removes `temperature`
-- removes `top_p`
-- sets `reasoning_effort` if it is missing
-- sets `verbosity` if it is missing
-
-Default injected values:
-
-- `reasoning_effort=medium`
-- `verbosity=medium`
-
-You can override these defaults with environment variables.
-
-## Requirements
-
-- Node.js `>=18.0.0`
-- No external runtime dependencies
 
 ## Configuration
 
@@ -66,21 +68,43 @@ You can override these defaults with environment variables.
   - Supported values: `low`, `medium`, `high`
   - Default: `medium`
 
-## Quick start
+- `AZURE_OPENAI_DEBUG_LOGS`
+  - Set to `1`, `true`, `yes`, or `on` to enable request/response lifecycle diagnostics
+  - Default: disabled
 
-```bash
-export AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com"
-npm start
-```
+## Chat Completions rewrite rules
 
-Or use the sample script:
+For JSON requests to paths matching `/chat/completions`, the proxy:
 
-```bash
-chmod +x start-sample.sh
-AZURE_OPENAI_ORIGIN="https://<resource-name>.openai.azure.com" ./start-sample.sh
-```
+- removes `temperature`
+- removes `top_p`
+- sets `reasoning_effort` if it is missing
+- sets `verbosity` if it is missing
 
-## Example
+Default injected values:
+
+- `reasoning_effort=medium`
+- `verbosity=medium`
+
+You can override these defaults with environment variables.
+
+## Logging
+
+The proxy logs an operational summary for each upstream response by default.
+
+Logged fields:
+
+- `status`
+- `usage`
+
+`usage` is extracted from the response body.
+For streamed Chat Completions responses, Azure OpenAI includes `usage` only when the request sets `stream_options.include_usage=true`; otherwise the proxy logs `usage: null`.
+
+For deeper diagnostics, enable `AZURE_OPENAI_DEBUG_LOGS=1`.
+This adds stream lifecycle events such as upstream response start/end, flush completion, and connection close events.
+When a streamed response is cut off before completion, the proxy also emits a partial response summary with any `usage` that was already observed.
+
+## Examples
 
 ### Azure deployment-style request
 
